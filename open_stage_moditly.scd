@@ -264,15 +264,16 @@ elementsDesc: [ // the elementsDesc of the whole device
 
 
 
+~file = JSONFileReader.read("/home/joe/Desktop/testb.json");
 
 
 ~format_toggle  =
 
 	{
-		var outarray = [];
+		arg open_stage_file; var outarray = [];
 
 
-		~file.at("tabs").at(0).at("widgets").do{arg widget;
+		open_stage_file.at("tabs").at(0).at("widgets").do{arg widget;
 
 
 
@@ -285,16 +286,67 @@ elementsDesc: [ // the elementsDesc of the whole device
 	outarray;
 	};
 
+~format_fader  =
+
+	{
+		arg open_stage_file; var outarray = [];
 
 
-	"\n".postln;
-	~format_toggle.value;
+		open_stage_file.at("tabs").at(0).at("widgets").do{arg widget;
+
+
+
+	if ( widget.at("type") == "fader", {
+				outarray =	outarray ++ [(\key:{widget.at("id")}.value,\oscPath:{widget.at("address")}.value)];
+				outarray.postln;
+	});
+
+	};
+	outarray;
+	};
+
+
+
+
+
+~format_led  =
+
+	{
+		arg open_stage_file; var outarray = [];
+
+
+		open_stage_file.at("tabs").at(0).at("widgets").do{arg widget;
+
+
+
+	if ( widget.at("type") == "led", {
+				outarray =	outarray ++ [(\key:{widget.at("id")}.value,\oscPath:{widget.at("address")}.value)];
+				outarray.postln;
+	});
+
+	};
+	outarray;
+	};
 
 
 
 
 
 
+
+
+
+
+
+//	"\n".postln;
+//~format_toggle.value(~file);
+
+//MKtl.elementTypesUsed
+
+
+//MKtl.globalSpecs.keys;
+
+//Spec.specs.keys;
 
 (
 ~desc1In = (
@@ -309,9 +361,46 @@ elementsDesc: [ // the elementsDesc of the whole device
 				shared: (elementType: 'button',
                 ioType: \in,
                 spec: \but),
-                 elements:~format_toggle.value;
+				elements:~format_toggle.value(~file);
 
-            )
+            ),
+
+
+
+			(
+                key: 'fader',
+				shared: (elementType: 'kb',
+                ioType: \in,
+                ),
+				elements:~format_fader.value(~file);
+
+            ),
+
+			(
+                key: 'led',
+				shared: (elementType: 'led',
+                ioType: \out,
+                ),
+				elements:~format_led.value(~file);
+
+            ),
+
+
+(
+key: '\bts',
+shared: (
+    elementType: 'button',
+	ioType: \in16
+),
+elements: 8.collect { |col|
+
+        (argTemplate: [ col])
+    })
+
+
+
+
+
         ]
     )
 );
@@ -324,13 +413,46 @@ elementsDesc: [ // the elementsDesc of the whole device
 m = MKtl( \example1in, ~desc1In );
 
 ~seq = m.elAt(\toggle); // returns the buttons
+~seqb = m.elAt(\fader); // returns the buttons
+~seql = m.elAt(\led); // returns the buttons
+
+
+ m.elAt(\bts); // returns the buttons
+
+
+SynthDef(\help_saw,
+	{ arg out=[0,1], freq=440, sustain=0.05,dur =0.5,amp = 0.5;
+		var env;
+		env = EnvGen.kr(Env.perc(0.01, sustain, 0.2), doneAction:2);
+		Out.ar(out,amp* Saw.ar(freq, env))
+	}).add;
 
 
 
 
-Pbind(
-		\degree, Pseq([10.rand,10.rand,10.rand,10.rand,10.rand],inf),
-    \dur, Prand([0.1], inf),
+m.elAt( \toggle ).asArray.at(0)
+
+
+~seq = [];
+
+
+8.do{arg io  ;
+
+	~seq= ~seq.add(
+Btled.new(m.elAt( \toggle).asArray.at(io),
+		m.elAt( \led).asArray.at(io));
+
+)};
+
+
+
+
+
+Pfuncn
+
+Pbind(\instrument,\help_saw,
+	\degree, (Pseq(~seqb,inf)*12).abs,
+    \dur, Prand([0.4], inf),
 		\amp,Pseq(~seq,inf),
 
 	\octave, 5,
