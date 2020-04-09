@@ -5,4 +5,7 @@
    Not all Open Stage Control widgets match well to Modality.  Widgets such as text,Image,Html… 
 Helper classes or functions would be needed. If you are inspired feel free to help or contribute in any way.  
 
+https://openstagecontrol.ammd.net/
+http://modalityteam.github.io/
+
 -Joenotjoe
