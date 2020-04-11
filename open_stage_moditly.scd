@@ -11,7 +11,7 @@ OSCFunc({|msg, time, addr, recvPort| \oneShot.postln; msg.at(2).postln; ~file = 
 
 b.sendMsg("/EDIT/GET", "127.0.0.1:57120","root" );
 
-
+(
 
 ~format_toggle  =
 
@@ -120,14 +120,128 @@ outarray;
 
 };
 
+~format_xy  = {
+	arg open_stage_file; var outarray;
 
-~format_range.value(~file);
+
+	open_stage_file.at("tabs").at(0).at("widgets").do{arg widget;
 
 
+
+if ( widget.at("type") == "xy", {
+
+     outarray =	outarray ++
+   [
+		     (\key:{widget.at("id")}.value,
+  elements: [
+(
+    key: 'x',
+    oscPath: {widget.at("address")}.value,
+    elementType: 'slider',
+    valueAt: 1,
+    ioType: \in
+),
+			(
+    key: 'y',
+    oscPath: {widget.at("address")}.value,
+    elementType: 'slider',
+    valueAt: 2,
+    ioType: \in
+			)],
+
+	)];
+
+
+				outarray.postln;
+	});
+
+	};
+
+
+
+
+outarray;
+
+};
+
+
+
+
+
+
+
+~format_multixy  = {
+	arg open_stage_file; var outarray;
+
+
+	open_stage_file.at("tabs").at(0).at("widgets").do{arg widget;
+
+
+
+		if ( widget.at("type") == "multixy", {
+
+     outarray =	outarray ++
+   [
+				(\key:{widget.at("id")}.value, elements:[] )
+			];
+
+
+	widget.at("points").asInt.do{arg item, i; var xandy;
+
+// need to put this in to elements key could be that this should be genorated and then the above created...
+
+				[item,i].postln;
+				xandy = 				[(\key:{widget.at("id").asSymbol++'_'++i.asSymbol}.value, elements:[
+(
+						key: {'x'++i.asSymbol}.value,
+    oscPath: {widget.at("address")}.value,
+    elementType: 'slider',
+					valueAt: {1+(i.asInt*2)}.value,
+    ioType: \in
+),
+			(
+						key: {'y'++i.asSymbol}.value,
+    oscPath: {widget.at("address")}.value,
+    elementType: 'slider',
+					valueAt: {2+(i.asInt*2)}.value,
+    ioType: \in
+				)])];
+
+// this needs work
+		 outarray.at(0).put('elements',outarray.at(0).at('elements')++xandy);
+
+			};
+
+
+	});
+
+	};
+
+
+
+
+outarray;
+
+};
+
+
+
+)
 
 
 //
 
+~format_multixy.value(~file);
+~format_xy.value(~file);
+
+
+
+[5]++[55]
+k.at(\tes3t)
+k = ();
+k.put(\tes3t,[1,5,4,3]);
+k.put(\tes3t,k.at(\tes3t).add(77));
+k
 when you start working with encoder look at RelSet it will let you set vars with the encoder by incrimeting.
 
 rgbled
@@ -187,6 +301,17 @@ fader should implemnt bilt in meter
 			elements:~format_range.value(~file);
 			),
 
+(
+			key: 'XY',
+			ioType: \in,
+			elements:~format_xy.value(~file);
+			),
+
+(
+			key: 'multixy',
+			ioType: \in,
+			elements:~format_multixy .value(~file);
+			),
 
 
 
@@ -200,6 +325,10 @@ fader should implemnt bilt in meter
 
 
 
+p = ~format_multixy.value(~file);
+
+
+p.postln;
 
 
 m = MKtl( \example1in, ~desc1In );
@@ -208,14 +337,18 @@ m = MKtl( \example1in, ~desc1In );
 ~seqb = m.elAt(\fader); // returns the buttons
 ~seql = m.elAt(\led); // returns the buttons
 ~range = m.elAt(\range);
+~xy = m.elAt(\xy);
+~multixy = m.elAt(\multixy);
 
+~multixy.at(0).keys
+~multixy.at(0).value
 
 // ok range keys are busted and the order is reversed it should go from top to botem left to right otherwise good.
 ~range.at("range_1")
 ~range.at(1).value;
  m.elAt(0); // returns the buttons
 
-~range.keys;
+~multixy.keys;
 
 SynthDef(\help_saw,
 	{ arg out=[0,1], freq=440, sustain=0.05,dur =0.5,amp = 0.5;
